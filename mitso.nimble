@@ -1,5 +1,6 @@
 # Package
 
+name          = "mitso"
 version       = "0.3.5"
 author        = "bit0r1n"
 description   = "арбузный парс митсо (минск btw)"
