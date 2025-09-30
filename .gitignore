@@ -2,3 +2,4 @@
 bin/
 test/
 .idea
+.DS_Store

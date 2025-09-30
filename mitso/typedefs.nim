@@ -23,8 +23,6 @@ type
     csrfToken*: Option[string]
     cookies*: HttpHeaderValues
     content*: Option[string]
-  MitsoWrapper* = ref object
-    client*: AsyncHttpClient
   Account* = ref object
     fullName*: string
     balance*: float

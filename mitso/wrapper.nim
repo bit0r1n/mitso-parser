@@ -19,15 +19,10 @@
 import typedefs, helpers, private/[ utils, constants ]
 import asyncdispatch, httpclient, uri, json, times, strutils, algorithm, sequtils, net
 
-proc newMitsoWrapper*(): MitsoWrapper =
-  new(result)
-  result.client = newAsyncHttpClient(
-    userAgent = USER_AGENT,
-    sslContext = newContext(verifyMode=CVerifyNone)
-  )
-
-proc getApiJsonResponse(wrapper: MitsoWrapper, url, debugEndpoint: string): Future[JsonNode] {.async.} =
-  let response = await wrapper.client.requestWithRetry(url)
+proc getApiJsonResponse(url, debugEndpoint: string): Future[JsonNode] {.async.} =
+  let
+    client = newAsyncMitsoHttpClient()
+    response = await client.requestWithRetry(url)
   await response.handleNonJsonResponse(debugEndpoint)
 
   result = parseJson(await response.body)
@@ -85,22 +80,22 @@ proc parseLessons(rawLessons: JsonNode): seq[ScheduleDay] =
         scheduleDay.lessons.sort do (x, y: Lesson) -> int: cmp(x.lessonTime, y.lessonTime)
         result.add(scheduleDay)
 
-proc getFacultyForms*(wrapper: MitsoWrapper, faculty: Faculty): Future[seq[Form]] {.async.} =
-  let formsJson = await wrapper.getApiJsonResponse(
+proc getFacultyForms*(faculty: Faculty): Future[seq[Form]] {.async.} =
+  let formsJson = await getApiJsonResponse(
     SCHEDULE_API_FORMS & "?" & encodeQuery({ "faculty": %faculty }),
     "facultyForms"
   )
   result = formsJson.getElems().mapIt(parseForm(it["id"].getStr()))
 
-proc getFormCourses*(wrapper: MitsoWrapper, faculty: Faculty, form: Form): Future[seq[Course]] {.async.} =
-  let coursesJson = await wrapper.getApiJsonResponse(
+proc getFormCourses*(faculty: Faculty, form: Form): Future[seq[Course]] {.async.} =
+  let coursesJson = await getApiJsonResponse(
     SCHEDULE_API_COURSES & "?" & encodeQuery({ "faculty": %faculty, "form": %form }),
     "formCourses"
   )
   result = coursesJson.getElems().mapIt(parseCourse(it["id"].getStr()))
 
-proc getGroups*(wrapper: MitsoWrapper, faculty: Faculty, form: Form, course: Course): Future[seq[Group]] {.async.} =
-  let groupsJson = await wrapper.getApiJsonResponse(
+proc getGroups*(faculty: Faculty, form: Form, course: Course): Future[seq[Group]] {.async.} =
+  let groupsJson = await getApiJsonResponse(
     SCHEDULE_API_GROUPS & "?" & encodeQuery({
       "faculty": %faculty,
       "form": %form,
@@ -121,15 +116,15 @@ proc getGroups*(wrapper: MitsoWrapper, faculty: Faculty, form: Form, course: Cou
       faculty: faculty
     ))
 
-proc getAllGroups*(wrapper: MitsoWrapper): Future[seq[Group]] {.async.} =
+proc getAllGroups*(): Future[seq[Group]] {.async.} =
   var resultGroups = newSeq[Group]()
 
   for faculty in Faculty:
-    let forms = await wrapper.getFacultyForms(faculty)
+    let forms = await getFacultyForms(faculty)
     for form in forms:
-      let courses = await wrapper.getFormCourses(faculty, form)
+      let courses = await getFormCourses(faculty, form)
       for course in courses:
-        let groups = await wrapper.getGroups(faculty, form, course)
+        let groups = await getGroups(faculty, form, course)
         resultGroups.add(groups)
 
   resultGroups.sort do (x, y: Group) -> int:
@@ -149,8 +144,8 @@ proc getAllGroups*(wrapper: MitsoWrapper): Future[seq[Group]] {.async.} =
 
   resultGroups.setLen(0)
 
-proc getSchedule*(wrapper: MitsoWrapper, group: Group): Future[seq[ScheduleDay]] {.async.} =
-  let scheduleJson = await wrapper.getApiJsonResponse(
+proc getSchedule*(group: Group): Future[seq[ScheduleDay]] {.async.} =
+  let scheduleJson = await getApiJsonResponse(
     SCHEDULE_API_LESSONS & "?" & encodeQuery({
       "faculty": $group.faculty,
       "form": $group.form,
@@ -162,26 +157,26 @@ proc getSchedule*(wrapper: MitsoWrapper, group: Group): Future[seq[ScheduleDay]]
   ) # { "названиеНедели": { "гггг-мм-дд": занятие[] } }
   result = scheduleJson.parseLessons()
 
-proc getTeachers*(wrapper: MitsoWrapper): Future[seq[string]] {.async.} =
-  let teachersJson = await wrapper.getApiJsonResponse(SCHEDULE_API_TEACHERS, "teachers")
+proc getTeachers*(): Future[seq[string]] {.async.} =
+  let teachersJson = await getApiJsonResponse(SCHEDULE_API_TEACHERS, "teachers")
   result = teachersJson.getElems().mapIt(it.getStr())
 
-proc getTeacherSubjects*(wrapper: MitsoWrapper, name: string): Future[seq[SelectOption]] {.async.} =
-  let teachersJson = await wrapper.getApiJsonResponse(
+proc getTeacherSubjects*(name: string): Future[seq[SelectOption]] {.async.} =
+  let teachersJson = await getApiJsonResponse(
     SCHEDULE_API_TEACHER_SUBJECTS & "?" & encodeQuery({ "teacher": name }, usePlus = false),
     "teacherSubjects"
   )
   result = teachersJson.getElems().mapIt((id: it["id"].getStr(), display: it["name"].getStr()))
 
-proc getTeacherSchedule*(wrapper: MitsoWrapper, name: string): Future[seq[ScheduleDay]] {.async.} =
-  let scheduleJson = await wrapper.getApiJsonResponse(
+proc getTeacherSchedule*(name: string): Future[seq[ScheduleDay]] {.async.} =
+  let scheduleJson = await getApiJsonResponse(
     SCHEDULE_API_TEACHER_LESSONS & "?" & encodeQuery({ "teacher": name }, usePlus = false),
     "teacherSchedule"
   )
   result = scheduleJson.parseLessons()
 
-proc getTeacherSubjectSchedule*(wrapper: MitsoWrapper, name, subject: string): Future[seq[ScheduleDay]] {.async.} =
-  let scheduleJson = await wrapper.getApiJsonResponse(
+proc getTeacherSubjectSchedule*(name, subject: string): Future[seq[ScheduleDay]] {.async.} =
+  let scheduleJson = await getApiJsonResponse(
     SCHEDULE_API_TEACHER_SUBJECT_LESSONS & "?" & encodeQuery({ "teacher": name, "subject": subject }, usePlus = false),
     "teacherSubjectSchedule"
   )

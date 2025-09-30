@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]#
 
-import strutils, strformat, times, options, nre
+import strutils, strformat, times, options, nre, httpclient, net
 import typedefs
 import private/constants
 
@@ -359,4 +359,9 @@ proc newLesson*(name: string,
     lessonTime: lessonTime,
     lType: lType,
     classrooms: classrooms
+  )
+
+proc newAsyncMitsoHttpClient*(): AsyncHttpClient = newAsyncHttpClient(
+    userAgent = USER_AGENT,
+    sslContext = newContext(verifyMode=CVerifyNone)
   )

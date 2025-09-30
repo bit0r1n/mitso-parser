@@ -1,7 +1,6 @@
 # Package
 
-name          = "mitso"
-version       = "0.3.5"
+version       = "0.3.6"
 author        = "bit0r1n"
 description   = "арбузный парс митсо (минск btw)"
 license       = "GPL-3.0-or-later"
