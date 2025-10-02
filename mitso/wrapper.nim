@@ -21,11 +21,20 @@ import asyncdispatch, httpclient, uri, json, times, strutils, algorithm, sequtil
 
 proc getApiJsonResponse(url, debugEndpoint: string): Future[JsonNode] {.async.} =
   let
-    client = newAsyncMitsoHttpClient()
-    response = await client.requestWithRetry(url)
-  await response.handleNonJsonResponse(debugEndpoint)
+    sslContext = newContext(verifyMode=CVerifyNone)
+    client = newAsyncHttpClient(
+      userAgent = USER_AGENT,
+      sslContext = sslContext
+    )
 
-  result = parseJson(await response.body)
+  try:
+    let response = await client.requestWithRetry(url)
+    await response.handleNonJsonResponse(debugEndpoint)
+
+    result = parseJson(await response.body)
+  finally:
+    client.close()
+    sslContext.destroyContext()
 
 proc parseLessons(rawLessons: JsonNode): seq[ScheduleDay] =
   if rawLessons.kind == JArray: return @[]
