@@ -78,21 +78,21 @@ proc parseFaculty*(faculty: string): Faculty =
 
 proc parseTime*(time: string): LessonTime =
   case time:
-  of "8.00-8.40, 8.45-9.25", "08.00-08.40, 08.45-09.25", "8.00-9.25", "08.00-09.25", "08.00-9.25":
+  of "8.00-8.40, 8.45-9.25", "08.00-08.40, 08.45-09.25", "8.00-9.25", "08.00-09.25", "08.00-9.25", "08.15-9.35":
     return ltFirst
-  of "09:35-10.15,10.20-11.00", "09.35- 11.00", "09.35-11.00":
+  of "09:35-10.15,10.20-11.00", "09.35- 11.00", "09.35-11.00", "09.45-11.05":
     return ltSecond
-  of "11:10-11.15,11.55-12.35", "11:10-11.50,11.55-12.35", "11.10-12.35":
+  of "11:10-11.15,11.55-12.35", "11:10-11.50,11.55-12.35", "11.10-12.35", "11.15-12.35":
     return ltThird
-  of "13:05-13.45,13.50-14.30", "13.05-14.30":
+  of "13:05-13.45,13.50-14.30", "13.05-14.30", "13.05-14.25":
     return ltFourth
-  of "14:40-15.20,15.25-16.05", "14.40-16.05":
+  of "14:40-15.20,15.25-16.05", "14.40-16.05", "14.35-15.55":
     return ltFifth
-  of "16:35-17.15,17.20-18.00", "16.35-18.00":
+  of "16:35-17.15,17.20-18.00", "16.35-18.00", "16.25-17.45":
     return ltSixth
-  of "18:10-18.50,18.55-19.15", "18.10-19.35":
+  of "18:10-18.50,18.55-19.15", "18.10-19.35", "17.55-19.15":
     return ltSeventh
-  of "19.45-20.25,20.30-21.10", "19.45-21.10":
+  of "19.45-20.25,20.30-21.10", "19.45-21.10", "19.25-20.45":
     return ltEighth
   else:
     raise newException(ValueError, "Invalid time")
@@ -221,40 +221,40 @@ proc `$`*(group: Group): string = &"{group.display} ({$group.course}, {$group.fa
 proc `$`*(lt: LessonTime): string =
   case lt:
   of ltFirst:
-    return "08:00 - 9:25"
+    return "08:15 - 9:35"
   of ltSecond:
-    return "09:35 - 11:00"
+    return "09:45 - 11:05"
   of ltThird:
-    return "11:10 - 12:35"
+    return "11:15 - 12:35"
   of ltFourth:
-    return "13:05 - 14:30"
+    return "13:05 - 14:25"
   of ltFifth:
-    return "14:40 - 16:05"
+    return "14:35 - 15:55"
   of ltSixth:
-    return "16:35 - 18:00"
+    return "16:25 - 17:45"
   of ltSeventh:
-    return "18:10 - 19:35"
+    return "17:55 - 19:15"
   of ltEighth:
-    return "19:45 - 21:10"
+    return "19:25 - 20:45"
 
 proc `$%`*(lt: LessonTime): TimeTuple =
   case lt:
   of ltFirst:
-    return (8, 0)
+    return (8, 15)
   of ltSecond:
-    return (9, 35)
+    return (9, 45)
   of ltThird:
-    return (11, 10)
+    return (11, 15)
   of ltFourth:
     return (13, 5)
   of ltFifth:
-    return (14, 40)
+    return (14, 35)
   of ltSixth:
-    return (16, 35)
+    return (16, 25)
   of ltSeventh:
-    return (18, 10)
+    return (17, 55)
   of ltEighth:
-    return (19, 45)
+    return (19, 25)
 
 proc `$`*(lesson: LessonType): string =
   case lesson:
